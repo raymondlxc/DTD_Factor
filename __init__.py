@@ -57,9 +57,12 @@ class Stock():
         sql="SELECT closeprice FROM stockprice WHERE secid='%s' and tradedate >='%s' and tradedate<='%s' and volume!=0"%(secid,RangeStartDate,EndDate)
         df=pd.read_sql(sql,conn)#将查询结果转化为dataframe格式
         data=df['closeprice'].tolist()#将dataframe转为list
-        logreturns = diff(log(data))
-        sigma_St= np.std(logreturns)*sqrt(250)
-        return sigma_St
+        if data==[]:  #若返回为空集，则停牌了一年以上，没有数据
+            return -1
+        else:
+            logreturns = diff(log(data))
+            sigma_St= np.std(logreturns)*sqrt(250)
+            return sigma_St
 
 def main():
     #连接数据库
@@ -93,13 +96,17 @@ def main():
         StartDate=getIpodate(secid)
         if StartDate<'20020131':#数据有效日期从2002年1月31日开始
             StartDate='20020131'
-        TodayDate=getCurrentTime()
+        #TodayDate=getCurrentTime()
+        #更新数据时使用
+        TodayDate='20180930'
         Datelist=get_date_list(StartDate,TodayDate)
         for EndDate in Datelist:
-            EndDate=EndDate.strftime('%Y%m%d')
+            EndDate=EndDate.strftime('%Y%m%d')#Datelist中生成的日期序列为日期格式，将其转为字符串便于数据库检索
             stock=Stock(secid,EndDate)
             St=stock.getSt()/1000000000
             sigma_St=stock.get_sigma_St()
+            if sigma_St==-1: #若股票停牌一年以上，则退出该次循环
+                continue
             F=stock.getF()/1000000000
             Vt_ini=F+St#资产价值为账面市值加负债，作为方程的初值求解
             r=stock.getRate()/100
@@ -124,7 +131,7 @@ def main():
                 print('正在计算'+secid+'日期'+EndDate+'DTD:成功')
                 print(DTD)
                 Vt=DTD[0]
-                sigma=DTD[1]                 
+                sigma=DTD[1]
                 dt=DTD[2]
                 sqltuple=(secid,EndDate,St,sigma_St,F,Vt_ini,r,Vt,sigma,dt,status)
                 cur.execute("INSERT INTO Results VALUES('%s','%s','%f','%f','%f','%f','%f','%f','%f','%f','%s')"%sqltuple)
