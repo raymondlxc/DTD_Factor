@@ -27,6 +27,12 @@ def get_date_list(StartDate,TodayDate):#获取从上市日期到最新日期之�
     DateList=pd.date_range(start=StartDate,end=TodayDate,freq='M')
     return DateList
 
+def Isoneyear(Datelist):
+    if len(Datelist)>=12:
+        return 1
+    else:
+        return 0
+
 class Stock():
     def __init__(self,secid,EndDate):
         self.secid=secid
@@ -94,12 +100,16 @@ def main():
     for secid in Stocklist:
         secid=secid[0] #读取元组中的数据
         StartDate=getIpodate(secid)
-        if StartDate<'20020131':#数据有效日期从2002年1月31日开始
-            StartDate='20020131'
+        if StartDate<'2002-01-31':#数据有效日期从2002年1月31日开始
+            StartDate='2002-01-31'
         #TodayDate=getCurrentTime()
         #更新数据时使用
         TodayDate='20180930'
         Datelist=get_date_list(StartDate,TodayDate)
+        if Isoneyear(Datelist)==0:
+            continue
+        StartDate=datetime.datetime.strptime(StartDate,'%Y-%m-%d')+relativedelta(years=1,months=0,days=0)
+        Datelist=get_date_list(StartDate,TodayDate)#将Datelist从一年后开始回滚
         for EndDate in Datelist:
             EndDate=EndDate.strftime('%Y%m%d')#Datelist中生成的日期序列为日期格式，将其转为字符串便于数据库检索
             stock=Stock(secid,EndDate)
