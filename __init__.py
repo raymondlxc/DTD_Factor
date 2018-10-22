@@ -81,9 +81,9 @@ def main():
         )
     cur = conn.cursor()
     #创建数据库表
-    cur.execute("DROP TABLE IF EXISTS Results")
+    cur.execute("DROP TABLE IF EXISTS Results1")
     cur.execute("""
-        CREATE TABLE Results(
+        CREATE TABLE Results1(
         secid VARCHAR(20) NOT NULL,
         EndDate VARCHAR(20),
         St FLOAT,
@@ -94,6 +94,7 @@ def main():
         Vt FLOAT,
         sigma FLOAT,
         dt FLOAT,
+        DTD FLOAT,
         status VARCHAR(20)
         )""");
     Stocklist=getAStock()
@@ -113,11 +114,11 @@ def main():
         for EndDate in Datelist:
             EndDate=EndDate.strftime('%Y%m%d')#Datelist中生成的日期序列为日期格式，将其转为字符串便于数据库检索
             stock=Stock(secid,EndDate)
-            St=stock.getSt()/1000000000
+            St=stock.getSt()
             sigma_St=stock.get_sigma_St()
             if sigma_St==-1: #若股票停牌一年以上，则退出该次循环
                 continue
-            F=stock.getF()/1000000000
+            F=stock.getF()
             Vt_ini=F+St#资产价值为账面市值加负债，作为方程的初值求解
             r=stock.getRate()/100
             try:
@@ -125,8 +126,8 @@ def main():
             except ValueError:
                 status='fail'#错误类型为传入参数初值有误
                 print(secid+'日期'+EndDate+'DTD计算失败')
-                sqltuple=(secid,EndDate,St,sigma_St,F,Vt_ini,r,0,0,0,status)
-                cur.execute("INSERT INTO Results VALUES('%s','%s','%f','%f','%f','%f','%f','%f','%f','%f','%s')"%sqltuple)
+                sqltuple=(secid,EndDate,St,sigma_St,F,Vt_ini,r,0,0,0,0,status)
+                cur.execute("INSERT INTO Results1 VALUES('%s','%s','%f','%f','%f','%f','%f','%f','%f','%f','%f','%s')"%sqltuple)
             except Exception:
                 status='Runtime'#以状态字判断迭代超时
                 print('正在计算'+secid+'日期'+EndDate+'DTD:迭代超时')
@@ -134,8 +135,9 @@ def main():
                 Vt=DTD[0]
                 sigma=DTD[1]
                 dt=DTD[2]
-                sqltuple=(secid,EndDate,St,sigma_St,F,Vt_ini,r,Vt,sigma,dt,status)
-                cur.execute("INSERT INTO Results VALUES('%s','%s','%f','%f','%f','%f','%f','%f','%f','%f','%s')"%sqltuple)
+                dtd=DTD[3]
+                sqltuple=(secid,EndDate,St,sigma_St,F,Vt_ini,r,Vt,sigma,dt,dtd,status)
+                cur.execute("INSERT INTO Results1 VALUES('%s','%s','%f','%f','%f','%f','%f','%f','%f','%f','%f','%s')"%sqltuple)
             else:
                 status='success'#以状态字判断迭代成功
                 print('正在计算'+secid+'日期'+EndDate+'DTD:成功')
@@ -143,8 +145,9 @@ def main():
                 Vt=DTD[0]
                 sigma=DTD[1]
                 dt=DTD[2]
-                sqltuple=(secid,EndDate,St,sigma_St,F,Vt_ini,r,Vt,sigma,dt,status)
-                cur.execute("INSERT INTO Results VALUES('%s','%s','%f','%f','%f','%f','%f','%f','%f','%f','%s')"%sqltuple)
+                dtd=DTD[3]
+                sqltuple=(secid,EndDate,St,sigma_St,F,Vt_ini,r,Vt,sigma,dt,dtd,status)
+                cur.execute("INSERT INTO Results1 VALUES('%s','%s','%f','%f','%f','%f','%f','%f','%f','%f','%f','%s')"%sqltuple)
             conn.commit()
     conn.close()
 
