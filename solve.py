@@ -17,10 +17,10 @@ def KMV(EV,St,sigma_St,F,r):
     #   定义标准正态分布的累积函数
             return norm.cdf(y)
 
-        return [Vt/F*N(dt) - pow(e, -r)*N(dt - sigma) - St/F,
-                sigma*Vt*N(dt)/St - sigma_St,
+        return [Vt/St*N(dt) - pow(e, -r)*(F/St)*N(dt - sigma) - 1,
+                sigma*(Vt/St)*N(dt) - sigma_St,
                 (log(Vt/F) + r + pow(sigma, 2)/2)- sigma*dt]
-    x0 = [EV,0.5,0.5]
+    x0 = [EV,0.5,1]
     result = fsolve(f,x0,epsfcn=0.5)
     result=[result[0],result[1],result[2],result[2]-result[1]]#DTD结果为dt-sigma
     return result

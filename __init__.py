@@ -21,6 +21,7 @@ def getIpodate(secid):
     cur.execute(sql)
     results = cur.fetchone()
     ipodate=results[0]#获取股票上市日期
+    ipodate=ipodate[0:10]#截取出有效部分
     return ipodate
 
 def get_date_list(StartDate,TodayDate):#获取从上市日期到最新日期之间所有月末日期的序列
@@ -51,7 +52,7 @@ class Stock():
         return results[0]
 
     def getSt(self):#获取报告日期的上市公司市值
-        sql="SELECT totalassets FROM financial WHERE secid='%s' and reportdate='%s'"%(secid,EndDate)
+        sql="SELECT ev FROM financial WHERE secid='%s' and reportdate='%s'"%(secid,EndDate)
         cur.execute(sql)
         results = cur.fetchone()
         return results[0]
@@ -119,6 +120,8 @@ def main():
             if sigma_St==-1: #若股票停牌一年以上，则退出该次循环
                 continue
             F=stock.getF()
+            if F==-1:#股票上市日期未能用季度报告数据进行填充
+                continue
             Vt_ini=F+St#资产价值为账面市值加负债，作为方程的初值求解
             r=stock.getRate()/100
             try:
