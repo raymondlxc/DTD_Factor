@@ -30,15 +30,15 @@ def main():
     engine = create_engine('mysql+mysqldb://root:@localhost:3306/update?charset=utf8')
     start_date=getStartDate()
     end_date=getCurrentTime()
-    UpdateData.InterestData()#更新利率
-    UpdateData.Stocklist(start_date,end_date)#更新stocklist
-    Stocklist=getAStock(end_date)
+    UpdateData.InterestData(start_date,end_date,engine)#更新利率
+    UpdateData.Stocklist(end_date,engine)#更新stocklist
+    Stocklist=getAStock()
     for secid in Stocklist:
         secid=secid[0] #读取元组中的数据
-        stock=UpdateData.Stock(secid,start_date,end_date)
-        stock.MarketData()
-        stock.FinancialData()
-        cal=UpdateParm.Cal(secid,end_date)
+        stock=UpdateData.Stock(secid,end_date)
+        stock.MarketData(start_date,engine)
+        stock.FinancialData(start_date,engine)
+        cal=UpdateParm.Cal(secid,end_date,engine)
         St=cal.getSt()
         sigma_St=stock.get_sigma_St()
         if sigma_St==-1: #若股票停牌一年以上，则退出该次循环
